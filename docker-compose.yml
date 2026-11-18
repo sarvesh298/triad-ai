@@ -1,0 +1,44 @@
+# TRIAD AI DMS: MongoDB + Flask API + static frontend.
+#   docker compose up --build -d
+#   App:  http://localhost:8080     API: http://localhost:5000/api/health
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db            # documents, users and GridFS files survive restarts
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    # Not published to the host: only the API container talks to the database.
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - backend/.env                   # JWT_SECRET_KEY, FLASK_SECRET_KEY and other settings
+    environment:
+      # Override the .env values so the API uses the mongo container, not localhost/Atlas.
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: triad_dms
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - web
+
+volumes:
+  mongo_data:

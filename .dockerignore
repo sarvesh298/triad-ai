@@ -1,0 +1,12 @@
+.git
+.gitignore
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+backend/venv
+backend/.venv
+backend/.env
+backend/.env.*
+!backend/.env.example
+docs
+*.md

@@ -1,0 +1,32 @@
+# Render Blueprint: one Docker web service that serves both the API and the frontend.
+# Database and file storage live in MongoDB Atlas (set MONGO_URI in the Render dashboard).
+services:
+  - type: web
+    name: triad-dms
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: MONGO_URI
+        sync: false              # entered by you when the Blueprint is created; never committed
+      - key: MONGO_DB_NAME
+        value: triad_dms
+      - key: JWT_SECRET_KEY
+        generateValue: true      # Render generates a random secret
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: JWT_EXPIRES_MINUTES
+        value: "60"
+      - key: REQUIRE_ACCOUNT_APPROVAL
+        value: "true"            # public site: new sign-ups wait for an admin
+      - key: DIVISIONS
+        value: Division A,Division B
+      - key: OCR_MAX_PAGES
+        value: "20"              # keeps OCR within the free plan's 512 MB memory
+      - key: WEB_CONCURRENCY
+        value: "1"               # one worker (4 threads) fits the free plan and keeps the login limiter consistent
+      - key: FLASK_DEBUG
+        value: "false"

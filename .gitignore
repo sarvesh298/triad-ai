@@ -1,0 +1,17 @@
+# Secrets: never commit
+backend/.env
+backend/.env.*
+!backend/.env.example
+.env
+
+# Python
+backend/venv/
+backend/.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local data / backups
+*.archive
+*.log
