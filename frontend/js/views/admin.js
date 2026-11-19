@@ -50,13 +50,13 @@ function fieldDialog(existing, onSaved) {
 
 export async function render({ root, query, isCurrent }) {
   let tab = query.get("tab") === "users" ? "users" : "fields";
-  let status = ["pending", "active", "rejected", "deactivated"].includes(query.get("status")) ? query.get("status") : "active";
+  let status = ["active", "deactivated"].includes(query.get("status")) ? query.get("status") : "active";
   let fields = [];
   let users = [];
 
   root.innerHTML = `
     <div class="page-head"><div><h1>Admin</h1></div><button class="btn btn-primary" id="add-field">Add field</button></div>
-    <div class="tabs"><button data-tab="fields">Metadata fields</button><button data-tab="users">Users <span class="n" id="n-pending"></span></button></div>
+    <div class="tabs"><button data-tab="fields">Metadata fields</button><button data-tab="users">Users</button></div>
     <div id="admin-body"></div>`;
   const body = $("#admin-body", root);
 
@@ -78,7 +78,7 @@ export async function render({ root, query, isCurrent }) {
 
   async function showUsers() {
     body.innerHTML = `<div class="filters"><div class="field"><label for="u-status">Status</label><select class="select" id="u-status">
-      ${["active", "pending", "rejected", "deactivated"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s[0].toUpperCase() + s.slice(1)}</option>`).join("")}</select></div></div>
+      ${["active", "deactivated"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s[0].toUpperCase() + s.slice(1)}</option>`).join("")}</select></div></div>
       <div class="section" id="users">${loadingRow()}</div>`;
     $("#u-status", root).onchange = (e) => { status = e.target.value; show(); };
     try {
@@ -134,6 +134,5 @@ export async function render({ root, query, isCurrent }) {
     }
   });
 
-  api.users("pending").then((r) => { if (isCurrent() && r.users.length) $("#n-pending", root).textContent = `(${r.users.length} pending)`; }).catch(() => {});
   await show();
 }

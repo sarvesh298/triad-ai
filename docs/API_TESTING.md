@@ -15,8 +15,7 @@ Example register:
   "division": "Division A"
 }
 ```
-With `REQUIRE_ACCOUNT_APPROVAL=true` the account is `pending`. An admin must call
-`POST /api/admin/users/<user_id>/approve` (or use the Admin section of the frontend) before the user can log in.
+The account is active immediately; log in with the same email and password.
 
 Example metadata field (admin):
 ```json

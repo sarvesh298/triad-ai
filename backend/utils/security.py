@@ -23,8 +23,8 @@ def current_user():
 
 
 def is_account_active(user):
-    # Accounts created before the approval workflow have no "status" and count as active.
-    return bool(user) and user.get("is_active", True) and user.get("status", "active") == "active"
+    # Every account is usable except one an administrator has deactivated.
+    return bool(user) and user.get("status") != "deactivated"
 
 
 def _authenticate():

@@ -49,15 +49,15 @@ def register():
         allowed = ", ".join(current_app.config["DIVISIONS"])
         return jsonify({"error": f"division must be one of: {allowed}"}), 400
 
-    needs_approval = current_app.config.get("REQUIRE_ACCOUNT_APPROVAL", True)
+    # Accounts are usable immediately: no administrator approval step.
     user = {
         "name": name,
         "email": email,
         "password_hash": generate_password_hash(password),
         "division": division,
         "role": "user",
-        "status": "pending" if needs_approval else "active",
-        "is_active": not needs_approval,
+        "status": "active",
+        "is_active": True,
         "created_at": datetime.now(timezone.utc),
     }
     try:
@@ -65,11 +65,7 @@ def register():
     except DuplicateKeyError:
         return jsonify({"error": "Email already registered"}), 409
 
-    message = (
-        "Registration successful. An administrator must approve your account before you can log in."
-        if needs_approval else "Registration successful"
-    )
-    return jsonify({"message": message, "user_id": str(result.inserted_id), "status": user["status"]}), 201
+    return jsonify({"message": "Registration successful", "user_id": str(result.inserted_id), "status": "active"}), 201
 
 
 @bp.post("/login")
@@ -90,11 +86,13 @@ def login():
         login_limiter.record_failure(limit_key)
         return jsonify({"error": "Invalid email or password"}), 401
 
-    status = user.get("status", "active")
-    if status == "pending":
-        return jsonify({"error": "Your account is awaiting administrator approval."}), 403
-    if status != "active" or not user.get("is_active", True):
+    # Only an explicit deactivation by an administrator blocks sign-in.
+    if user.get("status") == "deactivated":
         return jsonify({"error": "Your account has been deactivated. Contact an administrator."}), 403
+    if user.get("status", "active") != "active" or not user.get("is_active", True):
+        # Accounts left "pending"/"rejected" by the old approval workflow become active on sign-in.
+        get_db().users.update_one({"_id": user["_id"]}, {"$set": {"status": "active", "is_active": True}})
+        user.update(status="active", is_active=True)
 
     login_limiter.reset(limit_key)
     token = create_access_token(identity=str(user["_id"]))

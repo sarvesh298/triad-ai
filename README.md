@@ -81,17 +81,17 @@ Then reload. For anything other than local development, set `CORS_ORIGINS` in `.
 (e.g. `http://127.0.0.1:5500`).
 
 ## 5. Accounts, divisions and the first admin
-With `REQUIRE_ACCOUNT_APPROVAL=true` (the default), new sign-ups are created with `status: "pending"` and cannot
-log in until an admin approves them. This stops someone from registering into another division to read its
-documents. Admins approve or reject accounts in the frontend's **Admin** section (or via `/api/admin/users`).
+New accounts are active immediately: a user who registers is signed straight in to their division's dashboard.
+There is no approval step, so anyone who can reach the site can register into any allowed division (`DIVISIONS`)
+and read that division's documents. Admins can deactivate accounts in the frontend's **Admin** section
+(or via `/api/admin/users`); deactivated accounts cannot sign in.
 
 Bootstrap the first admin manually in MongoDB Atlas Data Explorer:
 - Database: `triad_dms`, collection: `users`
 - Register through the frontend, then find the user by email
 - Set `role` to `"admin"`, `status` to `"active"` and `is_active` to `true`
 
-Accounts created before the approval workflow existed (no `status` field) keep working as active accounts.
-If automated tests must log in immediately after registering, set `REQUIRE_ACCOUNT_APPROVAL=false` for the test run.
+Accounts left `pending` or `rejected` by the earlier approval workflow are activated the next time they sign in.
 
 ## 6. API endpoints
 All errors are returned as JSON `{ "error": "..." }`, including expired/invalid tokens (401),
@@ -100,7 +100,7 @@ oversized uploads (413) and throttled logins (429).
 ### Auth
 - `GET /api/auth/divisions`: allowed divisions (public)
 - `POST /api/auth/register` JSON: `{ "name":"A", "email":"a@example.com", "password":"password123", "division":"Division A" }`
-- `POST /api/auth/login` JSON: `{ "email":"a@example.com", "password":"password123" }`. 403 if the account is pending or deactivated; 429 after 5 failed attempts in 5 minutes
+- `POST /api/auth/login` JSON: `{ "email":"a@example.com", "password":"password123" }`. 403 if an admin has deactivated the account; 429 after 5 failed attempts in 5 minutes
 - `GET /api/auth/me`: current user (Bearer token)
 
 ### Documents (Bearer token required)
@@ -127,7 +127,7 @@ Once any field is configured, uploads may only use configured keys. Required fie
 `select` values must be one of the options and `date` values must be `YYYY-MM-DD`.
 
 ### Admin (admin only)
-- `GET /api/admin/users?status=pending|active|rejected|deactivated`
+- `GET /api/admin/users?status=active|deactivated`
 - `POST /api/admin/users/<user_id>/approve`, optional JSON `{ "division":"Division B" }` to correct the division
 - `POST /api/admin/users/<user_id>/reject`
 - `POST /api/admin/users/<user_id>/deactivate`

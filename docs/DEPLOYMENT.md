@@ -43,7 +43,7 @@ docker compose logs -f web        # follow the API log (Ctrl+C to stop following
 # Health: database connected and OCR tools found
 curl http://localhost:5000/api/health
 
-# Register and log in (REQUIRE_ACCOUNT_APPROVAL=false lets a new user log in straight away)
+# Register and log in (new accounts can log in straight away)
 curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" \
   -d '{"name":"Test User","email":"test@example.com","password":"password123","division":"Division A"}'
 curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" \
@@ -93,4 +93,4 @@ docker compose exec -T mongo mongorestore --archive < triad_dms.archive
 - MongoDB is not published to the host. To inspect it from your machine, use `docker compose exec mongo mongosh`,
   or add `ports: ["127.0.0.1:27018:27017"]` to the `mongo` service.
 - For a public server, put a TLS reverse proxy (e.g. Caddy or nginx with certificates) in front of ports 5000 and 8080,
-  set `CORS_ORIGINS` to your real frontend URL, and keep `REQUIRE_ACCOUNT_APPROVAL=true`.
+  set `CORS_ORIGINS` to your real frontend URL. Note that anyone who can reach the site can register into any division in `DIVISIONS`.

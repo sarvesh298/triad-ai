@@ -20,8 +20,6 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_MINUTES
         value: "60"
-      - key: REQUIRE_ACCOUNT_APPROVAL
-        value: "true"            # public site: new sign-ups wait for an admin
       - key: DIVISIONS
         value: Division A,Division B
       - key: OCR_MAX_PAGES

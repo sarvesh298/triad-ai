@@ -107,9 +107,6 @@ export function render(root, { mode, onAuthenticated }) {
   });
   if (mode === "register") loadDivisions();
 
-  const notice = sessionStorage.getItem("dms_auth_notice");
-  if (notice && mode === "login") { showAlert("ok", notice); sessionStorage.removeItem("dms_auth_notice"); }
-
   form.onsubmit = async (e) => {
     e.preventDefault();
     showAlert("", "");
@@ -127,12 +124,8 @@ export function render(root, { mode, onAuthenticated }) {
     setLoading(button, true);
     try {
       if (mode === "register") {
-        const reg = await api.register({ name: data.name.trim(), email: data.email.trim(), password: data.password, division: data.division });
-        if (reg.status === "pending") {
-          sessionStorage.setItem("dms_auth_notice", reg.message);
-          location.hash = "#/login";
-          return;
-        }
+        // New accounts are active immediately: sign straight in and open the dashboard.
+        await api.register({ name: data.name.trim(), email: data.email.trim(), password: data.password, division: data.division });
         notify.success("Account created");
       }
       const res = await api.login({ email: data.email.trim(), password: data.password });

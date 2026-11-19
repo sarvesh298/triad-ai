@@ -42,6 +42,5 @@ class Config:
     CORS_ORIGINS = _list("CORS_ORIGINS") or "*"
 
     # New accounts stay inactive until an admin approves them and confirms their division.
-    REQUIRE_ACCOUNT_APPROVAL = _bool("REQUIRE_ACCOUNT_APPROVAL", True)
     # Optional comma-separated whitelist, e.g. "Division A,Division B".
     DIVISIONS = _list("DIVISIONS")
