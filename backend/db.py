@@ -1,6 +1,6 @@
 from gridfs import GridFSBucket
 from pymongo import ASCENDING, DESCENDING, MongoClient
-from pymongo.errors import ConfigurationError, InvalidURI
+from pymongo.errors import ConfigurationError, InvalidURI, OperationFailure, ServerSelectionTimeoutError
 
 _client = None
 _db = None
@@ -23,7 +23,19 @@ def init_db(app):
     except ConfigurationError as exc:
         raise RuntimeError(f"MONGO_URI could not be resolved: {exc}") from exc
 
-    _client.admin.command("ping")
+    try:
+        _client.admin.command("ping")
+    except OperationFailure as exc:
+        raise RuntimeError(
+            f"MongoDB rejected the login ({exc.details.get('errmsg', exc) if exc.details else exc}). "
+            "Check the username and password in MONGO_URI (replace <db_password> with the real password, "
+            "URL-encode special characters) and that the user exists under Atlas > Database Access."
+        ) from exc
+    except ServerSelectionTimeoutError as exc:
+        raise RuntimeError(
+            "Could not reach MongoDB within 7 seconds. On Atlas, open Security > Network Access and allow "
+            f"0.0.0.0/0 (Render has no fixed IP); also check the cluster host in MONGO_URI. Details: {exc}"
+        ) from exc
     _db = _client[app.config["MONGO_DB_NAME"]]
     _fs = GridFSBucket(_db, bucket_name="documents")
 
