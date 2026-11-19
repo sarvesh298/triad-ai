@@ -7,11 +7,25 @@ _db = None
 _fs = None
 
 
+def clean_uri(value):
+    """Forgive common copy-paste mistakes in a hosting dashboard: spaces, quotes, a 'MONGO_URI=' prefix."""
+    uri = (value or "").strip()
+    if uri.upper().startswith("MONGO_URI="):
+        uri = uri[len("MONGO_URI="):].strip()
+    return uri.strip("\"'").strip()
+
+
 def init_db(app):
     global _client, _db, _fs
-    uri = app.config.get("MONGO_URI")
+    uri = clean_uri(app.config.get("MONGO_URI"))
     if not uri:
         raise RuntimeError("MONGO_URI is missing. Set it in backend/.env")
+    if not uri.startswith(("mongodb://", "mongodb+srv://")):
+        # Show only the start of the value: enough to spot a typo, never the password.
+        raise RuntimeError(
+            f"MONGO_URI must start with 'mongodb+srv://' or 'mongodb://', but it starts with {uri[:12]!r}. "
+            "Paste only the connection string as the value."
+        )
     try:
         # tz_aware=True so datetimes read back from MongoDB keep their UTC offset.
         _client = MongoClient(uri, serverSelectionTimeoutMS=7000, tz_aware=True)
